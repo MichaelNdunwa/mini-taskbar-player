@@ -1,0 +1,52 @@
+{
+  "name": "spotify-taskbar-player",
+  "version": "1.0.0",
+  "description": "Spotify mini-player pinned to the Windows 11 taskbar corner",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "dev": "electron . --dev --no-sandbox",
+    "build": "electron-builder --win --x64",
+    "build:portable": "electron-builder --win portable"
+  },
+  "keywords": [
+    "spotify",
+    "taskbar",
+    "windows11",
+    "electron"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "electron-store": "^8.1.0",
+    "open": "^9.1.0"
+  },
+  "build": {
+    "appId": "com.spotify.taskbar-player",
+    "productName": "Spotify Taskbar Player",
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ]
+  },
+  "allowScripts": {
+    "electron-winstaller": false
+  }
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Spotify Taskbar Player – Settings</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #121212;
+    color: #fff;
+    padding: 28px 32px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { font-size: 12px; color: #b3b3b3; margin-bottom: 24px; line-height: 1.5; }
+  .subtitle a { color: #1DB954; text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
+
+  label { display: block; font-size: 12px; color: #b3b3b3; margin-bottom: 6px; }
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    background: #282828;
+    border: 1px solid #3e3e3e;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #1DB954; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary { background: #1DB954; color: #000; }
+  .btn-primary:hover { background: #1aa34a; }
+  .btn-secondary { background: #282828; color: #fff; border: 1px solid #3e3e3e; }
+  .btn-secondary:hover { background: #3e3e3e; }
+  .btn-danger { background: #c0392b; color: #fff; margin-left: auto; }
+  .btn-danger:hover { background: #a93226; }
+
+  .status {
+    margin-top: 20px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: none;
+  }
+  .status.success { background: rgba(29,185,84,0.15); border: 1px solid #1DB954; color: #1DB954; display: block; }
+  .status.error   { background: rgba(192,57,43,0.15);  border: 1px solid #c0392b; color: #ff6b6b; display: block; }
+
+  .steps {
+    margin: 20px 0;
+    padding: 14px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    border: 1px solid #282828;
+  }
+  .steps h2 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #b3b3b3; }
+  .steps ol { padding-left: 18px; font-size: 12px; color: #b3b3b3; line-height: 1.8; }
+  .steps ol code {
+    background: #282828;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    color: #fff;
+    font-size: 11px;
+  }
+
+  .divider { height: 1px; background: #282828; margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<h1>🎵 Spotify Taskbar Player – Setup</h1>
+<p class="subtitle">
+  You need a free Spotify Developer App to get API access.<br>
+  Create one at <a href="https://developer.spotify.com/dashboard" id="linkDashboard">developer.spotify.com/dashboard</a>
+</p>
+
+<div class="steps">
+  <h2>Quick setup steps</h2>
+  <ol>
+    <li>Go to the Spotify Developer Dashboard (link above)</li>
+    <li>Click <strong>Create app</strong></li>
+    <li>Set app name to anything, e.g. <code>Taskbar Player</code></li>
+    <li>Set Redirect URI to <code>http://localhost:8888/callback</code></li>
+    <li>Tick <strong>Web API</strong> then save</li>
+    <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> below</li>
+    <li>Click <strong>Connect Spotify</strong> and log in in the browser</li>
+  </ol>
+</div>
+
+<label for="clientId">Client ID</label>
+<input type="text" id="clientId" placeholder="Paste your Client ID here" autocomplete="off" />
+
+<label for="clientSecret">Client Secret</label>
+<input type="password" id="clientSecret" placeholder="Paste your Client Secret here" autocomplete="off" />
+
+<div class="btn-row">
+  <button class="btn btn-primary" id="btnConnect">Connect Spotify</button>
+  <button class="btn btn-secondary" id="btnSave">Save only</button>
+  <button class="btn btn-danger" id="btnLogout">Logout</button>
+</div>
+
+<div class="status" id="status"></div>
+
+<script>
+  document.getElementById('linkDashboard').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.spotify.openSpotify();
+  });
+
+  // ── Load stored creds ──
+  (async () => {
+    const creds = await window.spotify.getStoredCredentials();
+    document.getElementById('clientId').value     = creds.clientId     || '';
+    document.getElementById('clientSecret').value = creds.clientSecret || '';
+  })();
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className   = `status ${type}`;
+  }
+
+  document.getElementById('btnSave').addEventListener('click', async () => {
+    const clientId     = document.getElementById('clientId').value.trim();
+    const clientSecret = document.getElementById('clientSecret').value.trim();
+    if (!clientId || !clientSecret) { showStatus('Both fields are required.', 'error'); return; }
+    await window.spotify.saveCredentials({ clientId, clientSecret });
+    showStatus('Credentials saved. Click "Connect Spotify" to authorise.', 'success');
+  });
+
+  document.getElementById('btnConnect').addEventListener('click', async () => {
+    const clientId     = document.getElementById('clientId').value.trim();
+    const clientSecret = document.getElementById('clientSecret').value.trim();
+    if (!clientId || !clientSecret) { showStatus('Both fields are required.', 'error'); return; }
+    await window.spotify.startAuth({ clientId, clientSecret });
+    showStatus('Browser opened for Spotify login. Come back here after authorising.', 'success');
+  });
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await window.spotify.logout();
+    showStatus('Logged out.', 'success');
+  });
+
+  window.spotify.onAuthSuccess(() => { showStatus('✅ Connected to Spotify!', 'success'); });
+  window.spotify.onAuthError((msg) => { showStatus(`Error: ${msg}`, 'error'); });
+</script>
+</body>
+</html>
